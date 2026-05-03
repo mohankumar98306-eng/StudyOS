@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudentOS</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#0f0f14;--bg2:#16161f;--bg3:#1e1e2a;--bg4:#252535;
+--glass:rgba(255,255,255,0.06);--glass2:rgba(255,255,255,0.1);
+--border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);
+--text:#f0eff8;--text2:#a09fc0;--text3:#6a6890;
+--accent:#7c6aff;--accent2:#5f4eff;--accentg:linear-gradient(135deg,#7c6aff,#a855f7);
+--green:#34d399;--red:#f87171;--yellow:#fbbf24;--blue:#60a5fa;--pink:#f472b6;
+--taskbar-h:52px;--win-header:36px;
+--shadow:0 20px 60px rgba(0,0,0,0.6);
+}
+.light-mode{
+--bg:#eeedf5;--bg2:#e5e4ef;--bg3:#dddce8;--bg4:#d5d4e0;
+--glass:rgba(0,0,0,0.04);--glass2:rgba(0,0,0,0.08);
+--border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.14);
+--text:#1a1830;--text2:#5a5878;--text3:#9a98b8;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;user-select:none;transition:background .3s,color .3s}
+#desktop{position:relative;width:100vw;height:calc(100vh - var(--taskbar-h));overflow:hidden;background:var(--bg)}
+#wallpaper{position:absolute;inset:0;background:radial-gradient(ellipse at 20% 50%,rgba(124,106,255,0.15) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(168,85,247,0.1) 0%,transparent 50%),radial-gradient(ellipse at 60% 80%,rgba(96,165,250,0.08) 0%,transparent 40%);pointer-events:none}
+.light-mode #wallpaper{background:radial-gradient(ellipse at 20% 50%,rgba(124,106,255,0.08) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(168,85,247,0.06) 0%,transparent 50%)}
+
+/* TASKBAR */
+#taskbar{position:fixed;bottom:0;left:0;right:0;height:var(--taskbar-h);background:rgba(15,15,20,0.85);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;align-items:center;gap:4px;padding:0 12px;z-index:9999}
+.light-mode #taskbar{background:rgba(238,237,245,0.9)}
+#start-btn{width:42px;height:42px;border-radius:10px;background:var(--accentg);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;transition:transform .15s,opacity .15s}
+#start-btn:hover{transform:scale(1.08)}
+#taskbar-apps{display:flex;gap:4px;flex:1;align-items:center;padding:0 8px}
+.tb-app{height:42px;min-width:42px;padding:0 10px;border-radius:9px;background:var(--glass);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text2);transition:all .15s;white-space:nowrap}
+.tb-app:hover{background:var(--glass2);color:var(--text)}
+.tb-app.active{background:rgba(124,106,255,0.2);border-color:rgba(124,106,255,0.4);color:var(--accent)}
+.tb-app .dot{width:4px;height:4px;border-radius:50%;background:var(--accent);margin-top:18px;margin-left:-4px}
+#taskbar-right{display:flex;align-items:center;gap:8px;margin-left:auto}
+#clock-tb{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text2);min-width:95px;text-align:right;cursor:pointer}
+.tb-btn{width:32px;height:32px;border-radius:7px;background:var(--glass);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .15s;color:var(--text2)}
+.tb-btn:hover{background:var(--glass2);color:var(--text)}
+
+/* START MENU */
+#start-menu{position:fixed;bottom:calc(var(--taskbar-h) + 8px);left:12px;width:420px;background:rgba(22,22,31,0.96);backdrop-filter:blur(30px);border:1px solid var(--border2);border-radius:16px;padding:16px;z-index:9998;display:none;box-shadow:var(--shadow)}
+.light-mode #start-menu{background:rgba(235,234,245,0.96)}
+#start-menu.open{display:block;animation:slideUp .2s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+#start-search{width:100%;height:40px;background:var(--glass2);border:1px solid var(--border2);border-radius:10px;padding:0 14px;font-size:14px;color:var(--text);font-family:'DM Sans',sans-serif;margin-bottom:14px;outline:none}
+#start-search::placeholder{color:var(--text3)}
+.start-section-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin:10px 0 8px}
+.start-apps-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.start-app-item{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 6px;border-radius:10px;cursor:pointer;transition:all .15s}
+.start-app-item:hover{background:var(--glass2)}
+.start-app-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px}
+.start-app-label{font-size:11px;color:var(--text2);text-align:center}
+#start-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:12px;border-top:1px solid var(--border)}
+.start-user{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2)}
+.start-avatar{width:28px;height:28px;border-radius:50%;background:var(--accentg);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff}
+
+/* SPOTLIGHT */
+#spotlight{position:fixed;top:20%;left:50%;transform:translateX(-50%);width:540px;background:rgba(22,22,31,0.97);backdrop-filter:blur(30px);border:1px solid var(--border2);border-radius:16px;padding:16px;z-index:10000;display:none;box-shadow:var(--shadow)}
+.light-mode #spotlight{background:rgba(235,234,245,0.97)}
+#spotlight.open{display:block;animation:fadeScale .15s ease}
+@keyframes fadeScale{from{opacity:0;transform:translateX(-50%) scale(.96)}to{opacity:1;transform:translateX(-50%) scale(1)}}
+#spotlight-input{width:100%;height:44px;background:transparent;border:none;font-size:17px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none}
+#spotlight-input::placeholder{color:var(--text3)}
+#spotlight-results{margin-top:8px;border-top:1px solid var(--border)}
+.spotlight-result{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;cursor:pointer;transition:all .1s}
+.spotlight-result:hover,.spotlight-result.selected{background:rgba(124,106,255,0.15)}
+.spotlight-result .icon{font-size:20px;width:32px}
+.spotlight-result .name{font-size:14px;font-weight:500}
+.spotlight-result .desc{font-size:12px;color:var(--text3)}
+
+/* WINDOWS */
+.window{position:absolute;background:rgba(22,22,31,0.97);backdrop-filter:blur(25px);border:1px solid var(--border2);border-radius:14px;box-shadow:var(--shadow);display:flex;flex-direction:column;min-width:300px;min-height:200px;overflow:hidden;transition:box-shadow .2s}
+.light-mode .window{background:rgba(232,231,242,0.97)}
+.window.focused{box-shadow:0 30px 80px rgba(0,0,0,0.7),0 0 0 1px rgba(124,106,255,0.3)}
+.window.minimized{display:none}
+.window-header{height:var(--win-header);background:rgba(255,255,255,0.03);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;padding:0 12px;cursor:move;flex-shrink:0}
+.light-mode .window-header{background:rgba(0,0,0,0.03)}
+.win-controls{display:flex;gap:6px}
+.win-ctrl{width:12px;height:12px;border-radius:50%;border:none;cursor:pointer;transition:opacity .15s}
+.win-ctrl.close{background:#f87171}
+.win-ctrl.minimize{background:#fbbf24}
+.win-ctrl.maximize{background:#34d399}
+.win-ctrl:hover{opacity:.75}
+.win-title{font-size:13px;font-weight:500;color:var(--text2);flex:1;text-align:center}
+.win-body{flex:1;overflow:auto;display:flex;flex-direction:column}
+.win-resize{position:absolute;right:0;bottom:0;width:14px;height:14px;cursor:se-resize;opacity:0}
+
+/* NOTIFICATIONS */
+#notif-container{position:fixed;top:16px;right:16px;z-index:10001;display:flex;flex-direction:column;gap:8px}
+.notif{background:rgba(30,30,42,0.95);backdrop-filter:blur(20px);border:1px solid var(--border2);border-radius:12px;padding:12px 16px;min-width:280px;max-width:320px;animation:slideInRight .3s ease;box-shadow:var(--shadow)}
+.light-mode .notif{background:rgba(230,229,242,0.95)}
+@keyframes slideInRight{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.notif-title{font-size:13px;font-weight:600;margin-bottom:3px}
+.notif-body{font-size:12px;color:var(--text2)}
+
+/* APP STYLES */
+.app-container{padding:16px;flex:1;overflow:auto;display:flex;flex-direction:column;gap:12px}
+
+/* CALCULATOR */
+#calc-display{background:var(--bg);border-radius:10px;padding:16px 14px 10px;text-align:right;margin-bottom:8px}
+.calc-expr{font-size:13px;color:var(--text3);min-height:18px;font-family:'JetBrains Mono',monospace}
+.calc-main{font-size:36px;font-weight:300;font-family:'JetBrains Mono',monospace;overflow:hidden;text-overflow:ellipsis}
+.calc-grid{display:grid;gap:6px}
+.calc-grid.basic{grid-template-columns:repeat(4,1fr)}
+.calc-grid.sci{grid-template-columns:repeat(5,1fr)}
+.calc-btn{height:48px;border-radius:9px;border:1px solid var(--border);background:var(--glass);color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .12s;font-weight:500}
+.calc-btn:hover{background:var(--glass2)}
+.calc-btn:active{transform:scale(.96)}
+.calc-btn.op{background:rgba(124,106,255,0.15);color:var(--accent);border-color:rgba(124,106,255,0.3)}
+.calc-btn.eq{background:var(--accentg);color:#fff;border:none;font-size:18px}
+.calc-btn.fn{background:rgba(96,165,250,0.12);color:var(--blue);font-size:12px;border-color:rgba(96,165,250,0.2)}
+.calc-tab-row{display:flex;gap:6px;margin-bottom:10px}
+.calc-tab{padding:6px 14px;border-radius:7px;background:var(--glass);border:1px solid var(--border);font-size:12px;cursor:pointer;transition:all .15s;color:var(--text2)}
+.calc-tab.active{background:rgba(124,106,255,0.2);border-color:rgba(124,106,255,0.4);color:var(--accent)}
+
+/* CLOCK */
+.clock-face{text-align:center;padding:20px 0}
+.clock-time{font-size:52px;font-family:'JetBrains Mono',monospace;font-weight:300;background:var(--accentg);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-2px}
+.clock-date{font-size:14px;color:var(--text2);margin-top:4px}
+.clock-tabs{display:flex;gap:6px;margin:12px 0}
+.clock-tab{padding:7px 16px;border-radius:8px;background:var(--glass);border:1px solid var(--border);font-size:13px;cursor:pointer;color:var(--text2);transition:all .15s}
+.clock-tab.active{background:rgba(124,106,255,0.2);border-color:rgba(124,106,255,0.4);color:var(--accent)}
+.timer-display{font-size:48px;font-family:'JetBrains Mono',monospace;font-weight:300;text-align:center;padding:20px 0;color:var(--text)}
+.timer-display.running{color:var(--green)}
+.btn-row{display:flex;gap:8px;justify-content:center}
+.action-btn{padding:9px 22px;border-radius:9px;border:1px solid var(--border);background:var(--glass);color:var(--text);font-size:13px;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif}
+.action-btn:hover{background:var(--glass2)}
+.action-btn.primary{background:var(--accentg);border:none;color:#fff;font-weight:500}
+.action-btn.danger{background:rgba(248,113,113,0.15);border-color:rgba(248,113,113,0.3);color:var(--red)}
+.alarm-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--glass);border:1px solid var(--border);border-radius:9px}
+.alarm-time{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:500}
+.alarm-label{font-size:12px;color:var(--text2)}
+.toggle-sw{width:40px;height:22px;border-radius:11px;background:var(--bg4);border:none;cursor:pointer;position:relative;transition:background .2s}
+.toggle-sw.on{background:var(--accent)}
+.toggle-sw::after{content:'';position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:3px;left:3px;transition:left .2s}
+.toggle-sw.on::after{left:21px}
+
+/* FILE MANAGER */
+.fm-toolbar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--glass);border-bottom:1px solid var(--border)}
+.fm-path{flex:1;font-size:13px;color:var(--text2);font-family:'JetBrains Mono',monospace}
+.fm-btn{padding:5px 12px;border-radius:7px;background:var(--glass);border:1px solid var(--border);font-size:12px;cursor:pointer;color:var(--text2);transition:all .15s;font-family:'DM Sans',sans-serif}
+.fm-btn:hover{background:var(--glass2);color:var(--text)}
+.fm-btn.primary{background:rgba(124,106,255,0.2);border-color:rgba(124,106,255,0.4);color:var(--accent)}
+.fm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;padding:12px}
+.fm-item{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 6px;border-radius:9px;cursor:pointer;transition:all .15s;border:2px solid transparent}
+.fm-item:hover{background:var(--glass)}
+.fm-item.selected{background:rgba(124,106,255,0.12);border-color:rgba(124,106,255,0.3)}
+.fm-icon{font-size:30px}
+.fm-name{font-size:11px;color:var(--text2);text-align:center;word-break:break-word;max-width:80px}
+.fm-sidebar{width:140px;border-right:1px solid var(--border);padding:12px 8px;display:flex;flex-direction:column;gap:3px;flex-shrink:0}
+.fm-sidebar-item{display:flex;align-items:center;gap:7px;padding:7px 8px;border-radius:7px;font-size:13px;color:var(--text2);cursor:pointer;transition:all .15s}
+.fm-sidebar-item:hover,.fm-sidebar-item.active{background:rgba(124,106,255,0.12);color:var(--accent)}
+.fm-main{display:flex;flex:1;overflow:hidden}
+
+/* NOTES */
+.notes-sidebar{width:180px;border-right:1px solid var(--border);overflow:auto;flex-shrink:0}
+.note-item{padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--border);transition:all .15s}
+.note-item:hover,.note-item.active{background:rgba(124,106,255,0.1)}
+.note-item .note-title{font-size:13px;font-weight:500;margin-bottom:2px}
+.note-item .note-preview{font-size:11px;color:var(--text3);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.note-editor{flex:1;display:flex;flex-direction:column}
+.note-title-input{background:transparent;border:none;border-bottom:1px solid var(--border);padding:12px 14px;font-size:16px;font-weight:600;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;width:100%}
+.note-content{flex:1;padding:12px 14px;font-size:14px;line-height:1.7;color:var(--text);font-family:'DM Sans',sans-serif;background:transparent;border:none;resize:none;outline:none}
+.notes-main{display:flex;flex:1;overflow:hidden}
+
+/* FOCUS MODE */
+.pomodoro-ring{position:relative;width:180px;height:180px;margin:0 auto}
+.pomodoro-ring svg{transform:rotate(-90deg)}
+.pomodoro-ring .ring-bg{fill:none;stroke:var(--bg4);stroke-width:8}
+.pomodoro-ring .ring-prog{fill:none;stroke:url(#pomGrad);stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .5s}
+.pomodoro-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.pom-time{font-size:32px;font-family:'JetBrains Mono',monospace;font-weight:300}
+.pom-label{font-size:11px;color:var(--text2)}
+.pom-sessions{display:flex;gap:6px;justify-content:center;margin:12px 0}
+.pom-dot{width:10px;height:10px;border-radius:50%;background:var(--bg4);transition:background .3s}
+.pom-dot.done{background:var(--accent)}
+.pom-dot.current{background:var(--green)}
+.blocked-apps{display:flex;flex-wrap:wrap;gap:6px;padding:10px 0}
+.block-tag{padding:4px 10px;border-radius:6px;background:rgba(248,113,113,0.12);border:1px solid rgba(248,113,113,0.25);font-size:12px;color:var(--red)}
+
+/* STUDENT TRACKER */
+.stat-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat-card{background:var(--glass);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+.stat-num{font-size:24px;font-weight:600;font-family:'JetBrains Mono',monospace;background:var(--accentg);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-label{font-size:11px;color:var(--text2);margin-top:3px}
+.subject-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.subject-name{font-size:13px;width:110px;flex-shrink:0}
+.progress-bar{flex:1;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;background:var(--accentg);border-radius:3px;transition:width .5s}
+.subject-hours{font-size:12px;color:var(--text2);width:45px;text-align:right;font-family:'JetBrains Mono',monospace}
+.log-session-form{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.log-session-form input,.log-session-form select{padding:7px 10px;border-radius:8px;background:var(--glass);border:1px solid var(--border);color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none}
+.log-session-form select option{background:var(--bg3)}
+
+/* AI ASSISTANT */
+.ai-chat{display:flex;flex-direction:column;height:100%}
+.ai-subject-tabs{display:flex;gap:5px;flex-wrap:wrap;padding:10px 12px;border-bottom:1px solid var(--border);background:var(--glass)}
+.ai-tab{padding:5px 12px;border-radius:20px;background:var(--glass);border:1px solid var(--border);font-size:12px;cursor:pointer;color:var(--text2);transition:all .15s;white-space:nowrap}
+.ai-tab.active{background:rgba(124,106,255,0.2);border-color:rgba(124,106,255,0.4);color:var(--accent);font-weight:500}
+.ai-messages{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.ai-msg{max-width:85%;padding:10px 13px;border-radius:12px;font-size:14px;line-height:1.6}
+.ai-msg.user{background:rgba(124,106,255,0.2);border:1px solid rgba(124,106,255,0.25);align-self:flex-end;color:var(--text)}
+.ai-msg.bot{background:var(--glass);border:1px solid var(--border);align-self:flex-start;color:var(--text);white-space:pre-wrap}
+.ai-msg.bot.loading{color:var(--text3)}
+.ai-input-row{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--border);background:var(--glass)}
+.ai-input{flex:1;padding:9px 13px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;resize:none;height:40px;max-height:120px;overflow-y:auto}
+.ai-send{width:40px;height:40px;border-radius:9px;background:var(--accentg);border:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:transform .15s;flex-shrink:0}
+.ai-send:hover{transform:scale(1.05)}
+.ai-send:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* DESKTOP ICONS */
+.desktop-icon{position:absolute;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px;border-radius:10px;cursor:pointer;transition:all .15s;border:2px solid transparent;width:72px}
+.desktop-icon:hover{background:rgba(255,255,255,0.07)}
+.desktop-icon.selected{background:rgba(124,106,255,0.15);border-color:rgba(124,106,255,0.3)}
+.desktop-icon .d-icon{font-size:28px;width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.desktop-icon .d-label{font-size:11px;color:var(--text);text-align:center;word-break:break-word;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+
+/* CONTEXT MENU */
+#ctx-menu{position:fixed;background:rgba(25,25,35,0.97);backdrop-filter:blur(20px);border:1px solid var(--border2);border-radius:10px;padding:5px;z-index:10002;display:none;min-width:160px;box-shadow:var(--shadow)}
+.light-mode #ctx-menu{background:rgba(232,231,242,0.97)}
+.ctx-item{padding:8px 12px;border-radius:7px;font-size:13px;cursor:pointer;transition:all .1s;display:flex;align-items:center;gap:8px;color:var(--text)}
+.ctx-item:hover{background:rgba(124,106,255,0.15);color:var(--accent)}
+.ctx-sep{height:1px;background:var(--border);margin:4px 0}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10003;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(5px)}
+.modal{background:var(--bg3);border:1px solid var(--border2);border-radius:14px;padding:20px;min-width:300px;box-shadow:var(--shadow)}
+.modal h3{font-size:16px;margin-bottom:12px}
+.modal input{width:100%;padding:9px 12px;border-radius:8px;background:var(--glass);border:1px solid var(--border);color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;margin-bottom:10px}
+.modal-btns{display:flex;justify-content:flex-end;gap:8px}
+
+/* TRASH */
+.trash-empty{text-align:center;padding:30px;color:var(--text3);font-size:13px}
+
+/* MISC */
+.section-hdr{font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin:8px 0 6px}
+input[type=time],input[type=text]{padding:7px 10px;border-radius:8px;background:var(--glass);border:1px solid var(--border);color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none}
+.divider{height:1px;background:var(--border);margin:8px 0}
+
+/* CHART CANVAS */
+.chart-wrap{background:var(--glass);border:1px solid var(--border);border-radius:10px;padding:12px;position:relative;height:180px}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+.window{max-width:95vw}
+#start-menu{width:calc(100vw - 24px)}
+}
+</style>
+</head>
+<body>
+
+<div id="desktop">
+  <div id="wallpaper"></div>
+  <!-- Desktop Icons rendered by JS -->
+</div>
+
+<div id="taskbar">
+  <button id="start-btn" onclick="toggleStart()" title="Start Menu">⚡</button>
+  <div id="taskbar-apps"></div>
+  <div id="taskbar-right">
+    <button class="tb-btn" onclick="toggleSpotlight()" title="Spotlight Search (Ctrl+Space)">🔍</button>
+    <button class="tb-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle Theme">🌙</button>
+    <div id="clock-tb" onclick="openApp('clock')"></div>
+  </div>
+</div>
+
+<div id="start-menu">
+  <input id="start-search" placeholder="🔍  Search apps, files, topics..." oninput="filterStart(this.value)" autocomplete="off">
+  <div class="start-section-title">Applications</div>
+  <div class="start-apps-grid" id="start-apps-grid"></div>
+  <div class="start-section-title">AI Subjects</div>
+  <div class="start-apps-grid" id="start-ai-grid"></div>
+  <div id="start-bottom">
+    <div class="start-user">
+      <div class="start-avatar">S</div>
+      <span>Student</span>
+    </div>
+    <button class="action-btn" style="font-size:12px" onclick="showNotif('System','StudentOS ready! Press Ctrl+Space for Spotlight.')">⚙ Settings</button>
+  </div>
+</div>
+
+<div id="spotlight">
+  <input id="spotlight-input" placeholder="Search apps, open AI tutor, find files..." oninput="spotlightSearch(this.value)" onkeydown="spotlightKey(event)" autocomplete="off">
+  <div id="spotlight-results"></div>
+</div>
+
+<div id="notif-container"></div>
+<div id="ctx-menu"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+// ==================== GLOBAL STATE ====================
+const STATE = {
+  windows:{},
+  zIndex:100,
+  theme:'dark',
+  files: JSON.parse(localStorage.getItem('stos_files')||'{"Desktop":[],"Documents":[],"Downloads":[],"Trash":[]}'),
+  notes: JSON.parse(localStorage.getItem('stos_notes')||'[]'),
+  alarms: JSON.parse(localStorage.getItem('stos_alarms')||'[]'),
+  tracker: JSON.parse(localStorage.getItem('stos_tracker')||'{"sessions":[],"subjects":{"Mathematics":0,"Physics":0,"Chemistry":0,"History":0,"Economics":0,"Commerce":0}}'),
+  pomodoro:{running:false,mode:'work',timeLeft:25*60,sessions:0,interval:null},
+  timer:{running:false,elapsed:0,interval:null},
+  stopwatch:{running:false,elapsed:0,interval:null},
+  calcMode:'basic',
+  calcExpr:'',
+  calcDisplay:'0',
+  currentNote:null,
+  fmPath:'Desktop',
+  activeClockTab:'clock',
+  activePomTab:'pomodoro',
+};
+
+// ==================== APP REGISTRY ====================
+const APPS = [
+  {id:'calculator',name:'Calculator',icon:'🧮',color:'#7c6aff',bg:'rgba(124,106,255,0.15)'},
+  {id:'clock',name:'Clock',icon:'🕐',color:'#60a5fa',bg:'rgba(96,165,250,0.15)'},
+  {id:'filemanager',name:'Files',icon:'📁',color:'#fbbf24',bg:'rgba(251,191,36,0.15)'},
+  {id:'notes',name:'Notes',icon:'📝',color:'#34d399',bg:'rgba(52,211,153,0.15)'},
+  {id:'focus',name:'Focus Mode',icon:'🎯',color:'#f472b6',bg:'rgba(244,114,182,0.15)'},
+  {id:'tracker',name:'Study Tracker',icon:'📊',color:'#fb923c',bg:'rgba(251,146,60,0.15)'},
+];
+const AI_APPS = [
+  {id:'ai_math',name:'Math AI',icon:'➕',color:'#818cf8',bg:'rgba(129,140,248,0.15)',subject:'Mathematics'},
+  {id:'ai_physics',name:'Physics AI',icon:'⚛',color:'#38bdf8',bg:'rgba(56,189,248,0.15)',subject:'Physics'},
+  {id:'ai_chem',name:'Chem AI',icon:'🧪',color:'#4ade80',bg:'rgba(74,222,128,0.15)',subject:'Chemistry'},
+  {id:'ai_humanities',name:'Humanities AI',icon:'🌍',color:'#fb923c',bg:'rgba(251,146,60,0.15)',subject:'Humanities'},
+  {id:'ai_commerce',name:'Commerce AI',icon:'💹',color:'#facc15',bg:'rgba(250,204,21,0.15)',subject:'Commerce'},
+];
+const ALL_APPS = [...APPS,...AI_APPS];
+
+// ==================== INIT ====================
+function init(){
+  renderDesktopIcons();
+  renderStartMenu();
+  startClockTick();
+  setupKeyBindings();
+  setTimeout(()=>showNotif('Welcome to StudentOS 👋','Your AI-powered study environment is ready!'),800);
+}
+
+// ==================== DESKTOP ICONS ====================
+const ICON_POSITIONS = [
+  [20,20],[20,100],[20,180],[20,260],[20,340],[20,420],
+  [100,20],[100,100],[100,180],[100,260],[100,340]
+];
+function renderDesktopIcons(){
+  const desktop=document.getElementById('desktop');
+  ALL_APPS.forEach((app,i)=>{
+    const el=document.createElement('div');
+    el.className='desktop-icon';
+    el.style.cssText=`left:${ICON_POSITIONS[i]?ICON_POSITIONS[i][0]:20}px;top:${ICON_POSITIONS[i]?ICON_POSITIONS[i][1]:20}px`;
+    el.dataset.appId=app.id;
+    el.innerHTML=`<div class="d-icon" style="background:${app.bg}">${app.icon}</div><div class="d-label">${app.name}</div>`;
+    el.ondblclick=()=>openApp(app.id);
+    el.onclick=(e)=>{document.querySelectorAll('.desktop-icon').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');e.stopPropagation()};
+    el.oncontextmenu=(e)=>{e.preventDefault();showCtxMenu(e.clientX,e.clientY,[{label:'Open '+app.name,icon:'▶',fn:()=>openApp(app.id)},{label:'App Info',icon:'ℹ',fn:()=>showNotif(app.name,'Double-click to open')}])};
+    desktop.appendChild(el);
+    // Draggable desktop icons
+    makeDraggableIcon(el);
+  });
+  document.getElementById('desktop').onclick=()=>{
+    document.querySelectorAll('.desktop-icon').forEach(x=>x.classList.remove('selected'));
+    closeStart();
+    document.getElementById('spotlight').classList.remove('open');
+  };
+  document.getElementById('desktop').oncontextmenu=(e)=>{
+    if(e.target.closest('.desktop-icon'))return;
+    e.preventDefault();
+    showCtxMenu(e.clientX,e.clientY,[
+      {label:'Change Wallpaper',icon:'🖼',fn:cycleWallpaper},
+      {label:'New Folder',icon:'📁',fn:()=>addFileToPath('Desktop','NewFolder','folder')},
+      {sep:true},
+      {label:'Toggle Theme',icon:'🌓',fn:toggleTheme},
+    ]);
+  };
+}
+function makeDraggableIcon(el){
+  let ox,oy,isDragging=false;
+  el.addEventListener('mousedown',e=>{
+    if(e.button!==0)return;
+    ox=e.clientX-el.offsetLeft; oy=e.clientY-el.offsetTop;
+    const onMove=e2=>{
+      isDragging=true;
+      el.style.left=(e2.clientX-ox)+'px';
+      el.style.top=(e2.clientY-oy)+'px';
+    };
+    const onUp=()=>{document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);setTimeout(()=>isDragging=false,10)};
+    document.addEventListener('mousemove',onMove);
+    document.addEventListener('mouseup',onUp);
+  });
+}
+
+// ==================== WALLPAPER CYCLE ====================
+const WALLPAPERS=[
+  'radial-gradient(ellipse at 20% 50%,rgba(124,106,255,0.15) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(168,85,247,0.1) 0%,transparent 50%),radial-gradient(ellipse at 60% 80%,rgba(96,165,250,0.08) 0%,transparent 40%)',
+  'radial-gradient(ellipse at 70% 30%,rgba(52,211,153,0.15) 0%,transparent 60%),radial-gradient(ellipse at 30% 70%,rgba(96,165,250,0.12) 0%,transparent 50%)',
+  'radial-gradient(ellipse at 50% 50%,rgba(244,114,182,0.1) 0%,transparent 60%),radial-gradient(ellipse at 80% 80%,rgba(251,191,36,0.1) 0%,transparent 50%)',
+  'radial-gradient(ellipse at 10% 90%,rgba(251,146,60,0.12) 0%,transparent 60%),radial-gradient(ellipse at 90% 10%,rgba(124,106,255,0.12) 0%,transparent 50%)',
+];
+let wallIdx=0;
+function cycleWallpaper(){wallIdx=(wallIdx+1)%WALLPAPERS.length;document.getElementById('wallpaper').style.background=WALLPAPERS[wallIdx];showNotif('Wallpaper','Changed to style '+(wallIdx+1))}
+
+// ==================== START MENU ====================
+function renderStartMenu(){
+  const g1=document.getElementById('start-apps-grid');
+  const g2=document.getElementById('start-ai-grid');
+  g1.innerHTML=''; g2.innerHTML='';
+  APPS.forEach(app=>{
+    g1.innerHTML+=`<div class="start-app-item" ondblclick="openApp('${app.id}');closeStart()" onclick="openApp('${app.id}');closeStart()">
+      <div class="start-app-icon" style="background:${app.bg}">${app.icon}</div>
+      <div class="start-app-label">${app.name}</div></div>`;
+  });
+  AI_APPS.forEach(app=>{
+    g2.innerHTML+=`<div class="start-app-item" onclick="openApp('${app.id}');closeStart()">
+      <div class="start-app-icon" style="background:${app.bg}">${app.icon}</div>
+      <div class="start-app-label">${app.name}</div></div>`;
+  });
+}
+function toggleStart(){const m=document.getElementById('start-menu');m.classList.toggle('open')}
+function closeStart(){document.getElementById('start-menu').classList.remove('open')}
+function filterStart(q){
+  const items=document.querySelectorAll('.start-app-item');
+  items.forEach(el=>{
+    const lbl=el.querySelector('.start-app-label').textContent.toLowerCase();
+    el.style.display=lbl.includes(q.toLowerCase())||!q?'flex':'none';
+  });
+}
+
+// ==================== SPOTLIGHT ====================
+function toggleSpotlight(){
+  const s=document.getElementById('spotlight');
+  s.classList.toggle('open');
+  if(s.classList.contains('open')){document.getElementById('spotlight-input').value='';document.getElementById('spotlight-results').innerHTML='';document.getElementById('spotlight-input').focus();}
+}
+let spotlightIdx=-1;
+function spotlightSearch(q){
+  const res=document.getElementById('spotlight-results');
+  if(!q){res.innerHTML='';return}
+  const matches=ALL_APPS.filter(a=>a.name.toLowerCase().includes(q.toLowerCase())||a.id.includes(q.toLowerCase()));
+  const aiKeywords=['math','calculus','physics','chemistry','history','economics','commerce','help','solve','explain'];
+  let html=matches.map((a,i)=>`<div class="spotlight-result" data-app="${a.id}"><span class="icon">${a.icon}</span><div><div class="name">${a.name}</div><div class="desc">App</div></div></div>`).join('');
+  if(aiKeywords.some(k=>q.toLowerCase().includes(k))){
+    html+=`<div class="spotlight-result" data-action="ai" data-q="${q}"><span class="icon">🤖</span><div><div class="name">Ask AI: "${q}"</div><div class="desc">Open AI Tutor</div></div></div>`;
+  }
+  res.innerHTML=html||`<div style="padding:10px;color:var(--text3);font-size:13px">No results for "${q}"</div>`;
+  res.querySelectorAll('.spotlight-result').forEach(el=>{
+    el.onclick=()=>{
+      if(el.dataset.app)openApp(el.dataset.app);
+      else if(el.dataset.action==='ai'){openApp('ai_math');setTimeout(()=>sendAIMessage(el.dataset.q,'ai_math'),300);}
+      document.getElementById('spotlight').classList.remove('open');
+    };
+  });
+  spotlightIdx=-1;
+}
+function spotlightKey(e){
+  if(e.key==='Escape'){document.getElementById('spotlight').classList.remove('open');return}
+  const items=document.querySelectorAll('#spotlight-results .spotlight-result');
+  if(e.key==='ArrowDown'){spotlightIdx=Math.min(spotlightIdx+1,items.length-1)}
+  else if(e.key==='ArrowUp'){spotlightIdx=Math.max(spotlightIdx-1,0)}
+  else if(e.key==='Enter'&&spotlightIdx>=0){items[spotlightIdx].click();return}
+  items.forEach((el,i)=>el.classList.toggle('selected',i===spotlightIdx));
+}
+function setupKeyBindings(){
+  document.addEventListener('keydown',e=>{
+    if((e.ctrlKey||e.metaKey)&&e.key===' '){e.preventDefault();toggleSpotlight()}
+    if(e.key==='Escape'){document.getElementById('spotlight').classList.remove('open');closeStart()}
+  });
+}
+
+// ==================== WINDOW MANAGER ====================
+function openApp(id){
+  if(STATE.windows[id]){
+    const w=STATE.windows[id];
+    w.style.display='flex';
+    w.classList.remove('minimized');
+    focusWindow(w);
+    updateTaskbar();
+    return;
+  }
+  const app=ALL_APPS.find(a=>a.id===id);
+  if(!app)return;
+  const w=document.createElement('div');
+  w.className='window';
+  w.id='win_'+id;
+  w.dataset.appId=id;
+  const size=getWindowSize(id);
+  const pos=getWindowPos();
+  w.style.cssText=`width:${size.w}px;height:${size.h}px;left:${pos.x}px;top:${pos.y}px`;
+  w.innerHTML=`
+    <div class="window-header" id="wh_${id}">
+      <div class="win-controls">
+        <button class="win-ctrl close" onclick="closeWindow('${id}')"></button>
+        <button class="win-ctrl minimize" onclick="minimizeWindow('${id}')"></button>
+        <button class="win-ctrl maximize" onclick="toggleMaximize('${id}')"></button>
+      </div>
+      <div class="win-title">${app.icon} ${app.name}</div>
+    </div>
+    <div class="win-body" id="wb_${id}"></div>
+    <div class="win-resize" id="wr_${id}"></div>`;
+  document.getElementById('desktop').appendChild(w);
+  STATE.windows[id]=w;
+  makeDraggable(w,document.getElementById('wh_'+id));
+  makeResizable(w,document.getElementById('wr_'+id));
+  w.onmousedown=()=>focusWindow(w);
+  focusWindow(w);
+  renderApp(id,document.getElementById('wb_'+id));
+  updateTaskbar();
+}
+function getWindowSize(id){
+  const sizes={calculator:{w:320,h:480},clock:{w:340,h:420},filemanager:{w:580,h:420},notes:{w:500,h:400},focus:{w:360,h:520},tracker:{w:540,h:480}};
+  if(id.startsWith('ai_'))return{w:500,h:520};
+  return sizes[id]||{w:420,h:400};
+}
+function getWindowPos(){
+  const x=80+Math.random()*200;
+  const y=40+Math.random()*100;
+  return{x,y};
+}
+function focusWindow(w){
+  STATE.zIndex++;
+  w.style.zIndex=STATE.zIndex;
+  document.querySelectorAll('.window').forEach(x=>x.classList.remove('focused'));
+  w.classList.add('focused');
+}
+function closeWindow(id){
+  const w=STATE.windows[id];
+  if(w){w.remove();delete STATE.windows[id]}
+  updateTaskbar();
+  if(id==='focus'&&STATE.pomodoro.interval){clearInterval(STATE.pomodoro.interval);STATE.pomodoro.running=false}
+  if(id==='clock'){clearInterval(STATE.timer.interval);clearInterval(STATE.stopwatch.interval)}
+}
+function minimizeWindow(id){
+  const w=STATE.windows[id];
+  if(w)w.classList.add('minimized');
+  updateTaskbar();
+}
+function toggleMaximize(id){
+  const w=STATE.windows[id];
+  if(!w)return;
+  if(w.dataset.maxed){
+    w.style.cssText=w.dataset.prev;
+    delete w.dataset.maxed;
+  }else{
+    w.dataset.prev=w.style.cssText;
+    w.style.cssText=`width:100vw;height:calc(100vh - var(--taskbar-h));left:0;top:0;border-radius:0`;
+    w.dataset.maxed='1';
+  }
+}
+function updateTaskbar(){
+  const bar=document.getElementById('taskbar-apps');
+  bar.innerHTML='';
+  Object.entries(STATE.windows).forEach(([id,w])=>{
+    const app=ALL_APPS.find(a=>a.id===id);
+    if(!app)return;
+    const btn=document.createElement('div');
+    btn.className='tb-app'+(w.classList.contains('focused')?' active':'');
+    btn.innerHTML=`${app.icon} ${app.name}${!w.classList.contains('minimized')?'<span class="dot"></span>':''}`;
+    btn.onclick=()=>{
+      if(w.classList.contains('minimized')){w.classList.remove('minimized');focusWindow(w)}
+      else if(w.classList.contains('focused'))minimizeWindow(id);
+      else focusWindow(w);
+      updateTaskbar();
+    };
+    bar.appendChild(btn);
+  });
+}
+function makeDraggable(el,handle){
+  let ox,oy;
+  handle.addEventListener('mousedown',e=>{
+    if(e.target.closest('.win-controls'))return;
+    if(el.dataset.maxed)return;
+    ox=e.clientX-el.offsetLeft; oy=e.clientY-el.offsetTop;
+    const move=e2=>{
+      let nx=e2.clientX-ox, ny=e2.clientY-oy;
+      ny=Math.max(0,Math.min(ny,window.innerHeight-60));
+      nx=Math.max(-200,Math.min(nx,window.innerWidth-100));
+      el.style.left=nx+'px'; el.style.top=ny+'px';
+    };
+    const up=()=>{document.removeEventListener('mousemove',move);document.removeEventListener('mouseup',up)};
+    document.addEventListener('mousemove',move);
+    document.addEventListener('mouseup',up);
+  });
+}
+function makeResizable(el,handle){
+  let sx,sy,sw,sh;
+  handle.addEventListener('mousedown',e=>{
+    sx=e.clientX; sy=e.clientY; sw=el.offsetWidth; sh=el.offsetHeight;
+    handle.style.opacity='1';
+    const move=e2=>{
+      el.style.width=Math.max(300,sw+e2.clientX-sx)+'px';
+      el.style.height=Math.max(200,sh+e2.clientY-sy)+'px';
+    };
+    const up=()=>{handle.style.opacity='0';document.removeEventListener('mousemove',move);document.removeEventListener('mouseup',up)};
+    document.addEventListener('mousemove',move);
+    document.addEventListener('mouseup',up);
+    e.preventDefault();
+  });
+}
+
+// ==================== APP RENDERER ====================
+function renderApp(id,body){
+  if(id==='calculator')renderCalc(body);
+  else if(id==='clock')renderClock(body);
+  else if(id==='filemanager')renderFM(body);
+  else if(id==='notes')renderNotes(body);
+  else if(id==='focus')renderFocus(body);
+  else if(id==='tracker')renderTracker(body);
+  else if(id.startsWith('ai_'))renderAI(id,body);
+}
+
+// ==================== CALCULATOR ====================
+function renderCalc(body){
+  body.innerHTML=`
+    <div class="app-container" style="gap:8px">
+      <div class="calc-tab-row">
+        <button class="calc-tab ${STATE.calcMode==='basic'?'active':''}" onclick="switchCalcMode('basic')">Basic</button>
+        <button class="calc-tab ${STATE.calcMode==='sci'?'active':''}" onclick="switchCalcMode('sci')">Scientific</button>
+      </div>
+      <div id="calc-display">
+        <div class="calc-expr" id="calc-expr">${STATE.calcExpr}</div>
+        <div class="calc-main" id="calc-main">${STATE.calcDisplay}</div>
+      </div>
+      <div id="calc-buttons"></div>
+    </div>`;
+  renderCalcButtons(body);
+}
+function switchCalcMode(m){STATE.calcMode=m;const w=STATE.windows['calculator'];if(w)renderCalc(document.getElementById('wb_calculator'))}
+function renderCalcButtons(body){
+  const el=document.getElementById('calc-buttons');
+  if(!el)return;
+  if(STATE.calcMode==='basic'){
+    const btns=[
+      ['C','±','%','÷'],['7','8','9','×'],['4','5','6','−'],['1','2','3','+'],['00','0','.','=']
+    ];
+    el.innerHTML=`<div class="calc-grid basic">${btns.flat().map(b=>
+      `<button class="calc-btn ${isOp(b)?'op':''} ${b==='='?'eq':''}" onclick="calcPress('${b}')">${b}</button>`).join('')}</div>`;
+  }else{
+    const sciTop=[['sin','cos','tan','log','ln'],['x²','x³','√','π','e'],['(',')','^','!','%']];
+    const basic=[['C','±','÷','×'],['7','8','9','−'],['4','5','6','+'],['1','2','3','='],['00','0','.','=']];
+    el.innerHTML=`<div class="calc-grid sci" style="margin-bottom:6px">${sciTop.flat().map(b=>
+      `<button class="calc-btn fn" onclick="calcPress('${b}')">${b}</button>`).join('')}</div>
+      <div class="calc-grid basic">${[...basic].flat().map((b,i)=>
+      `<button class="calc-btn ${isOp(b)?'op':''} ${b==='='?'eq':''}" onclick="calcPress('${b}')">${b}</button>`).join('')}</div>`;
+  }
+}
+function isOp(b){return['÷','×','−','+','%','±'].includes(b)}
+function calcPress(b){
+  let d=STATE.calcDisplay,ex=STATE.calcExpr;
+  if(b==='C'){STATE.calcDisplay='0';STATE.calcExpr='';updateCalc();return}
+  if(b==='='){
+    try{
+      let expr=ex+d;
+      expr=expr.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/π/g,'Math.PI').replace(/e/g,'Math.E');
+      const r=Function('"use strict";return ('+expr+')')();
+      STATE.calcExpr=ex+d+'=';
+      STATE.calcDisplay=parseFloat(r.toFixed(10)).toString();
+    }catch{STATE.calcDisplay='Error'}
+    updateCalc();return;
+  }
+  if(b==='±'){STATE.calcDisplay=(parseFloat(d)*-1).toString();updateCalc();return}
+  if(b==='π'){STATE.calcDisplay=Math.PI.toString();updateCalc();return}
+  if(b==='e'){STATE.calcDisplay=Math.E.toString();updateCalc();return}
+  if(b==='x²'){STATE.calcDisplay=(Math.pow(parseFloat(d),2)).toString();updateCalc();return}
+  if(b==='x³'){STATE.calcDisplay=(Math.pow(parseFloat(d),3)).toString();updateCalc();return}
+  if(b==='√'){STATE.calcDisplay=(Math.sqrt(parseFloat(d))).toString();updateCalc();return}
+  if(b==='sin'){STATE.calcDisplay=(Math.sin(parseFloat(d)*Math.PI/180)).toFixed(6).toString();updateCalc();return}
+  if(b==='cos'){STATE.calcDisplay=(Math.cos(parseFloat(d)*Math.PI/180)).toFixed(6).toString();updateCalc();return}
+  if(b==='tan'){STATE.calcDisplay=(Math.tan(parseFloat(d)*Math.PI/180)).toFixed(6).toString();updateCalc();return}
+  if(b==='log'){STATE.calcDisplay=(Math.log10(parseFloat(d))).toFixed(6).toString();updateCalc();return}
+  if(b==='ln'){STATE.calcDisplay=(Math.log(parseFloat(d))).toFixed(6).toString();updateCalc();return}
+  if(b==='!'){let n=parseInt(d);let f=1;for(let i=2;i<=n;i++)f*=i;STATE.calcDisplay=f.toString();updateCalc();return}
+  if(['÷','×','−','+','^','(',')'].includes(b)){
+    STATE.calcExpr+=(d==='0'?'':d)+b;
+    STATE.calcDisplay='0';
+    updateCalc();return;
+  }
+  if(b==='.'){STATE.calcDisplay=d.includes('.')?d:d+'.';updateCalc();return}
+  STATE.calcDisplay=(d==='0'?b:d+b);
+  updateCalc();
+}
+function updateCalc(){
+  const em=document.getElementById('calc-expr'),dm=document.getElementById('calc-main');
+  if(em)em.textContent=STATE.calcExpr;
+  if(dm)dm.textContent=STATE.calcDisplay;
+}
+
+// ==================== CLOCK ====================
+function renderClock(body){
+  body.innerHTML=`<div class="app-container">
+    <div class="clock-tabs" id="clock-tab-row">
+      ${['clock','timer','stopwatch','alarms'].map(t=>`<button class="clock-tab ${STATE.activeClockTab===t?'active':''}" onclick="switchClockTab('${t}')">${t.charAt(0).toUpperCase()+t.slice(1)}</button>`).join('')}
+    </div>
+    <div id="clock-content"></div>
+  </div>`;
+  renderClockTab(STATE.activeClockTab);
+}
+function switchClockTab(t){
+  STATE.activeClockTab=t;
+  document.querySelectorAll('.clock-tab').forEach(el=>el.classList.toggle('active',el.textContent.toLowerCase()===t));
+  renderClockTab(t);
+}
+function renderClockTab(t){
+  const c=document.getElementById('clock-content');
+  if(!c)return;
+  if(t==='clock'){
+    c.innerHTML=`<div class="clock-face">
+      <div class="clock-time" id="clock-big"></div>
+      <div class="clock-date" id="clock-date-big"></div>
+    </div>`;
+    updateBigClock();
+  }else if(t==='timer'){
+    c.innerHTML=`<div>
+      <div class="timer-display ${STATE.timer.running?'running':''}" id="timer-disp">${formatTime(STATE.timer.elapsed)}</div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px;flex-wrap:wrap">
+        ${[5,10,15,20,25,30].map(m=>`<button class="action-btn" onclick="setTimer(${m*60})" style="font-size:12px;padding:5px 10px">${m}m</button>`).join('')}
+      </div>
+      <div class="btn-row">
+        <button class="action-btn primary" onclick="toggleTimer()" id="timer-toggle-btn">${STATE.timer.running?'Pause':'Start'}</button>
+        <button class="action-btn danger" onclick="resetTimer()">Reset</button>
+      </div>
+    </div>`;
+  }else if(t==='stopwatch'){
+    c.innerHTML=`<div>
+      <div class="timer-display ${STATE.stopwatch.running?'running':''}" id="sw-disp">${formatTime(STATE.stopwatch.elapsed)}</div>
+      <div class="btn-row">
+        <button class="action-btn primary" onclick="toggleSW()" id="sw-btn">${STATE.stopwatch.running?'Pause':'Start'}</button>
+        <button class="action-btn danger" onclick="resetSW()">Reset</button>
+      </div>
+    </div>`;
+  }else if(t==='alarms'){
+    c.innerHTML=`<div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <input type="time" id="alarm-time-inp" value="07:00" style="flex:1">
+        <input type="text" id="alarm-label-inp" placeholder="Label..." style="flex:1">
+        <button class="action-btn primary" onclick="addAlarm()">Add</button>
+      </div>
+      <div id="alarm-list">${renderAlarmList()}</div>
+    </div>`;
+  }
+}
+function updateBigClock(){
+  const bd=document.getElementById('clock-big'),dd=document.getElementById('clock-date-big');
+  if(!bd)return;
+  const now=new Date();
+  bd.textContent=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  dd.textContent=now.toLocaleDateString([],{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+}
+function formatTime(s){const m=Math.floor(s/60),sec=s%60;return`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`}
+function setTimer(s){STATE.timer.elapsed=s;clearInterval(STATE.timer.interval);STATE.timer.running=false;const d=document.getElementById('timer-disp');if(d){d.textContent=formatTime(s);d.className='timer-display'}}
+function toggleTimer(){
+  if(STATE.timer.elapsed<=0)return;
+  if(STATE.timer.running){clearInterval(STATE.timer.interval);STATE.timer.running=false}
+  else{STATE.timer.running=true;STATE.timer.interval=setInterval(()=>{
+    if(STATE.timer.elapsed>0){STATE.timer.elapsed--;const d=document.getElementById('timer-disp');if(d)d.textContent=formatTime(STATE.timer.elapsed)}
+    else{clearInterval(STATE.timer.interval);STATE.timer.running=false;showNotif('⏰ Timer','Time is up!');const d=document.getElementById('timer-disp');if(d)d.className='timer-display'}
+  },1000)}
+  const btn=document.getElementById('timer-toggle-btn');if(btn)btn.textContent=STATE.timer.running?'Pause':'Start';
+}
+function resetTimer(){clearInterval(STATE.timer.interval);STATE.timer.running=false;STATE.timer.elapsed=0;const d=document.getElementById('timer-disp');if(d){d.textContent='00:00';d.className='timer-display'}}
+function toggleSW(){
+  if(STATE.stopwatch.running){clearInterval(STATE.stopwatch.interval);STATE.stopwatch.running=false}
+  else{STATE.stopwatch.running=true;STATE.stopwatch.interval=setInterval(()=>{STATE.stopwatch.elapsed++;const d=document.getElementById('sw-disp');if(d){d.textContent=formatTime(STATE.stopwatch.elapsed);d.className='timer-display running'}},1000)}
+  const btn=document.getElementById('sw-btn');if(btn)btn.textContent=STATE.stopwatch.running?'Pause':'Start';
+}
+function resetSW(){clearInterval(STATE.stopwatch.interval);STATE.stopwatch.running=false;STATE.stopwatch.elapsed=0;const d=document.getElementById('sw-disp');if(d)d.textContent='00:00'}
+function addAlarm(){
+  const t=document.getElementById('alarm-time-inp')?.value;
+  const l=document.getElementById('alarm-label-inp')?.value||'Alarm';
+  if(!t)return;
+  STATE.alarms.push({id:Date.now(),time:t,label:l,on:true});
+  saveAlarms();
+  const el=document.getElementById('alarm-list');if(el)el.innerHTML=renderAlarmList();
+}
+function renderAlarmList(){
+  if(!STATE.alarms.length)return'<div style="text-align:center;color:var(--text3);padding:20px;font-size:13px">No alarms set</div>';
+  return STATE.alarms.map(a=>`<div class="alarm-item" style="margin-bottom:6px">
+    <div><div class="alarm-time">${a.time}</div><div class="alarm-label">${a.label}</div></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="toggle-sw ${a.on?'on':''}" onclick="toggleAlarm(${a.id})" id="atgl_${a.id}"></button>
+      <button class="action-btn danger" style="padding:4px 8px;font-size:11px" onclick="deleteAlarm(${a.id})">✕</button>
+    </div>
+  </div>`).join('');
+}
+function toggleAlarm(id){const a=STATE.alarms.find(x=>x.id===id);if(a){a.on=!a.on;saveAlarms();const el=document.getElementById('alarm-list');if(el)el.innerHTML=renderAlarmList()}}
+function deleteAlarm(id){STATE.alarms=STATE.alarms.filter(x=>x.id!==id);saveAlarms();const el=document.getElementById('alarm-list');if(el)el.innerHTML=renderAlarmList()}
+function saveAlarms(){localStorage.setItem('stos_alarms',JSON.stringify(STATE.alarms))}
+
+// ==================== FILE MANAGER ====================
+function renderFM(body){
+  body.style.flexDirection='row';
+  body.style.overflow='hidden';
+  body.innerHTML=`
+    <div class="fm-sidebar">
+      ${Object.keys(STATE.files).filter(k=>k!=='Trash').map(k=>`
+        <div class="fm-sidebar-item ${STATE.fmPath===k?'active':''}" onclick="navigateFM('${k}')">
+          📁 ${k}
+        </div>`).join('')}
+      <div class="fm-sidebar-item ${STATE.fmPath==='Trash'?'active':''}" onclick="navigateFM('Trash')">🗑 Trash</div>
+    </div>
+    <div class="fm-main" style="flex-direction:column;flex:1;overflow:hidden">
+      <div class="fm-toolbar">
+        <span class="fm-path">~/${STATE.fmPath}</span>
+        <button class="fm-btn primary" onclick="createFMItem('file')">+ File</button>
+        <button class="fm-btn primary" onclick="createFMItem('folder')">+ Folder</button>
+        ${STATE.fmPath==='Trash'?'<button class="fm-btn danger" style="color:var(--red);border-color:rgba(248,113,113,.3)" onclick="emptyTrash()">Empty Trash</button>':''}
+      </div>
+      <div class="fm-grid" id="fm-grid">${renderFMGrid()}</div>
+    </div>`;
+}
+function renderFMGrid(){
+  const items=STATE.files[STATE.fmPath]||[];
+  if(!items.length)return`<div style="grid-column:1/-1;text-align:center;color:var(--text3);padding:30px;font-size:13px">${STATE.fmPath==='Trash'?'🗑 Trash is empty':'📭 No files here'}</div>`;
+  return items.map(f=>`
+    <div class="fm-item" data-id="${f.id}" ondblclick="openFMItem('${f.id}')" onclick="selectFM(this)" oncontextmenu="fmCtx(event,'${f.id}')">
+      <div class="fm-icon">${f.type==='folder'?'📁':getFileIcon(f.name)}</div>
+      <div class="fm-name">${f.name}</div>
+    </div>`).join('');
+}
+function getFileIcon(n){const ext=n.split('.').pop()?.toLowerCase();const icons={txt:'📄',pdf:'📕',js:'💻',html:'🌐',css:'🎨',png:'🖼',jpg:'🖼',mp3:'🎵',mp4:'🎬',doc:'📝',json:'📋'};return icons[ext]||'📄'}
+function navigateFM(p){STATE.fmPath=p;const w=STATE.windows['filemanager'];if(w)renderFM(document.getElementById('wb_filemanager'))}
+function selectFM(el){document.querySelectorAll('.fm-item').forEach(x=>x.classList.remove('selected'));el.classList.add('selected')}
+function createFMItem(type){
+  const name=prompt(`Enter ${type} name:`)||`New ${type}`;
+  if(!name)return;
+  if(!STATE.files[STATE.fmPath])STATE.files[STATE.fmPath]=[];
+  STATE.files[STATE.fmPath].push({id:Date.now().toString(),name,type,created:new Date().toISOString(),content:''});
+  saveFiles();
+  const g=document.getElementById('fm-grid');if(g)g.innerHTML=renderFMGrid();
+  showNotif('File Manager',`Created ${type} "${name}"`);
+}
+function openFMItem(id){
+  const item=findFMItem(id);
+  if(!item)return;
+  if(item.type==='folder'){navigateFM(item.name);return}
+  openApp('notes');
+  setTimeout(()=>{
+    STATE.currentNote={id:item.id,title:item.name,content:item.content||''};
+    renderNotes(document.getElementById('wb_notes'));
+  },150);
+}
+function findFMItem(id){for(const k in STATE.files){const f=STATE.files[k].find(x=>x.id===id);if(f)return f}return null}
+function addFileToPath(path,name,type){
+  if(!STATE.files[path])STATE.files[path]=[];
+  STATE.files[path].push({id:Date.now().toString(),name,type,created:new Date().toISOString(),content:''});
+  saveFiles();
+  showNotif('Files',`Created "${name}" on ${path}`);
+}
+function fmCtx(e,id){
+  e.preventDefault();
+  const inTrash=STATE.fmPath==='Trash';
+  showCtxMenu(e.clientX,e.clientY,[
+    ...(inTrash?[{label:'Restore',icon:'♻',fn:()=>restoreFMItem(id)}]:[{label:'Delete',icon:'🗑',fn:()=>deleteFMItem(id)},{label:'Rename',icon:'✏',fn:()=>renameFMItem(id)}]),
+    ...(inTrash?[{label:'Delete Permanently',icon:'❌',fn:()=>permDeleteFMItem(id)}]:[]),
+  ]);
+}
+function deleteFMItem(id){
+  const items=STATE.files[STATE.fmPath];
+  const idx=items.findIndex(x=>x.id===id);
+  if(idx<0)return;
+  const item=items.splice(idx,1)[0];
+  if(!STATE.files.Trash)STATE.files.Trash=[];
+  STATE.files.Trash.push({...item,deletedFrom:STATE.fmPath});
+  saveFiles();
+  const g=document.getElementById('fm-grid');if(g)g.innerHTML=renderFMGrid();
+  showNotif('Files',`"${item.name}" moved to Trash`);
+}
+function restoreFMItem(id){
+  const idx=STATE.files.Trash.findIndex(x=>x.id===id);
+  if(idx<0)return;
+  const item=STATE.files.Trash.splice(idx,1)[0];
+  const dest=item.deletedFrom||'Desktop';
+  if(!STATE.files[dest])STATE.files[dest]=[];
+  STATE.files[dest].push(item);
+  saveFiles();
+  const g=document.getElementById('fm-grid');if(g)g.innerHTML=renderFMGrid();
+  showNotif('Files',`Restored "${item.name}"`);
+}
+function permDeleteFMItem(id){
+  STATE.files.Trash=STATE.files.Trash.filter(x=>x.id!==id);
+  saveFiles();
+  const g=document.getElementById('fm-grid');if(g)g.innerHTML=renderFMGrid();
+}
+function renameFMItem(id){
+  const item=findFMItem(id);if(!item)return;
+  const n=prompt('Rename to:',item.name);
+  if(n){item.name=n;saveFiles();const g=document.getElementById('fm-grid');if(g)g.innerHTML=renderFMGrid()}
+}
+function emptyTrash(){STATE.files.Trash=[];saveFiles();const g=document.getElementById('fm-grid');if(g)g.innerHTML=renderFMGrid();showNotif('Files','Trash emptied')}
+function saveFiles(){localStorage.setItem('stos_files',JSON.stringify(STATE.files))}
+
+// ==================== NOTES ====================
+function renderNotes(body){
+  body.style.flexDirection='row';body.style.overflow='hidden';
+  const notes=STATE.notes;
+  body.innerHTML=`
+    <div class="notes-sidebar">
+      <div style="padding:8px;border-bottom:1px solid var(--border);display:flex;gap:5px">
+        <button class="action-btn primary" style="flex:1;font-size:12px;padding:6px" onclick="newNote()">+ New</button>
+      </div>
+      <div id="notes-list">${notes.map(n=>`
+        <div class="note-item ${STATE.currentNote&&STATE.currentNote.id===n.id?'active':''}" onclick="openNote('${n.id}')">
+          <div class="note-title">${n.title||'Untitled'}</div>
+          <div class="note-preview">${(n.content||'').substring(0,40)}...</div>
+        </div>`).join('')||'<div style="padding:14px;color:var(--text3);font-size:12px">No notes yet</div>'}</div>
+    </div>
+    <div class="note-editor" id="note-editor-area">
+      ${STATE.currentNote?`
+        <input class="note-title-input" value="${STATE.currentNote.title||''}" oninput="updateNoteTitle(this.value)" placeholder="Title...">
+        <textarea class="note-content" oninput="updateNoteContent(this.value)" placeholder="Start typing...">${STATE.currentNote.content||''}</textarea>
+        <div style="padding:6px 14px;display:flex;gap:8px;border-top:1px solid var(--border)">
+          <button class="action-btn primary" style="font-size:12px;padding:6px 12px" onclick="saveNote()">Save</button>
+          <button class="action-btn danger" style="font-size:12px;padding:6px 12px" onclick="deleteNote('${STATE.currentNote.id}')">Delete</button>
+          <button class="action-btn" style="font-size:12px;padding:6px 12px" onclick="askAIAboutNote()">🤖 Ask AI</button>
+        </div>`:
+        '<div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:14px">Select or create a note</div>'}
+    </div>`;
+}
+function newNote(){
+  const n={id:Date.now().toString(),title:'Untitled Note',content:'',created:new Date().toISOString()};
+  STATE.notes.unshift(n);STATE.currentNote=n;saveNotes();
+  renderNotes(document.getElementById('wb_notes'));
+}
+function openNote(id){
+  const n=STATE.notes.find(x=>x.id===id);
+  if(n){STATE.currentNote=n;renderNotes(document.getElementById('wb_notes'))}
+}
+function updateNoteTitle(v){if(STATE.currentNote)STATE.currentNote.title=v}
+function updateNoteContent(v){if(STATE.currentNote)STATE.currentNote.content=v}
+function saveNote(){
+  if(!STATE.currentNote)return;
+  const idx=STATE.notes.findIndex(x=>x.id===STATE.currentNote.id);
+  if(idx>=0)STATE.notes[idx]=STATE.currentNote;
+  saveNotes();showNotif('Notes','Note saved ✓');
+  renderNotes(document.getElementById('wb_notes'));
+}
+function deleteNote(id){
+  STATE.notes=STATE.notes.filter(x=>x.id!==id);
+  if(STATE.currentNote?.id===id)STATE.currentNote=null;
+  saveNotes();renderNotes(document.getElementById('wb_notes'));
+}
+function askAIAboutNote(){
+  if(!STATE.currentNote)return;
+  openApp('ai_humanities');
+  setTimeout(()=>sendAIMessage('Explain or summarize this note: '+STATE.currentNote.content,'ai_humanities'),300);
+}
+function saveNotes(){localStorage.setItem('stos_notes',JSON.stringify(STATE.notes))}
+
+// ==================== FOCUS MODE ====================
+function renderFocus(body){
+  const p=STATE.pomodoro;
+  const total=p.mode==='work'?25*60:5*60;
+  const frac=p.timeLeft/total;
+  const circ=2*Math.PI*80;
+  const dash=circ*frac;
+  body.innerHTML=`
+    <div class="app-container">
+      <div class="clock-tabs">
+        <button class="clock-tab ${STATE.activePomTab==='pomodoro'?'active':''}" onclick="switchPomTab('pomodoro')">Pomodoro</button>
+        <button class="clock-tab ${STATE.activePomTab==='blocked'?'active':''}" onclick="switchPomTab('blocked')">Focus Rules</button>
+      </div>
+      <div id="pom-content">${STATE.activePomTab==='pomodoro'?renderPomodoroContent():renderBlockedContent()}</div>
+    </div>`;
+}
+function renderPomodoroContent(){
+  const p=STATE.pomodoro;
+  const total=p.mode==='work'?25*60:5*60;
+  const frac=p.timeLeft/total;
+  const circ=2*Math.PI*80;
+  const dash=circ*frac;
+  return`
+    <div style="text-align:center">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:8px">${p.mode==='work'?'🎯 Focus Session':'☕ Break Time'}</div>
+      <div class="pomodoro-ring">
+        <svg width="180" height="180" viewBox="0 0 180 180">
+          <defs><linearGradient id="pomGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#7c6aff"/><stop offset="100%" stop-color="#a855f7"/></linearGradient></defs>
+          <circle class="ring-bg" cx="90" cy="90" r="80"/>
+          <circle class="ring-prog" cx="90" cy="90" r="80" stroke-dasharray="${circ}" stroke-dashoffset="${circ-dash}" id="pom-ring"/>
+        </svg>
+        <div class="pomodoro-center">
+          <div class="pom-time" id="pom-time-disp">${formatTime(p.timeLeft)}</div>
+          <div class="pom-label">${p.mode==='work'?'Work':'Break'}</div>
+        </div>
+      </div>
+      <div class="pom-sessions">${Array.from({length:4},(_,i)=>`<div class="pom-dot ${i<p.sessions%4?'done':''} ${i===p.sessions%4&&p.running?'current':''}"></div>`).join('')}</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Session ${Math.floor(p.sessions/4)+1} · ${p.sessions} completed today</div>
+      <div class="btn-row">
+        <button class="action-btn primary" onclick="togglePomodoro()" id="pom-toggle">${p.running?'⏸ Pause':'▶ Start'}</button>
+        <button class="action-btn" onclick="resetPomodoro()">↺ Reset</button>
+        <button class="action-btn" onclick="skipPomPhase()">⏭ Skip</button>
+      </div>
+      <div style="margin-top:16px">
+        <div class="section-hdr">Session Length</div>
+        <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
+          ${[15,20,25,30,45].map(m=>`<button class="action-btn" style="font-size:12px;padding:5px 10px" onclick="setPomDuration(${m})">${m}m</button>`).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+function renderBlockedContent(){
+  return`<div>
+    <div class="section-hdr">🚫 Simulated App Blocking</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:10px">During focus sessions, these app categories are "blocked":</p>
+    <div class="blocked-apps">
+      ${['Social Media','YouTube','Gaming','Shopping','Streaming','News'].map(a=>`<div class="block-tag">🚫 ${a}</div>`).join('')}
+    </div>
+    <div class="divider"></div>
+    <div class="section-hdr">✅ Allowed Apps</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px">
+      ${['Notes','Calculator','Study Tracker','AI Tutor','Files'].map(a=>`<div style="padding:4px 10px;border-radius:6px;background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.25);font-size:12px;color:var(--green)">✓ ${a}</div>`).join('')}
+    </div>
+    <div class="divider"></div>
+    <div style="padding:10px;background:var(--glass);border-radius:8px;font-size:12px;color:var(--text2)">
+      💡 Tip: Enable real browser extension blocking with StudentOS Focus Extension (coming soon)
+    </div>
+  </div>`;
+}
+function switchPomTab(t){STATE.activePomTab=t;const c=document.getElementById('pom-content');if(c)c.innerHTML=t==='pomodoro'?renderPomodoroContent():renderBlockedContent()}
+function togglePomodoro(){
+  const p=STATE.pomodoro;
+  if(p.running){clearInterval(p.interval);p.running=false}
+  else{
+    p.running=true;
+    p.interval=setInterval(()=>{
+      if(p.timeLeft>0){
+        p.timeLeft--;
+        const d=document.getElementById('pom-time-disp');
+        const r=document.getElementById('pom-ring');
+        if(d)d.textContent=formatTime(p.timeLeft);
+        if(r){const total=p.mode==='work'?25*60:5*60;const frac=p.timeLeft/total;const circ=2*Math.PI*80;r.setAttribute('stroke-dashoffset',(circ-circ*frac).toString())}
+      }else{
+        clearInterval(p.interval);p.running=false;
+        if(p.mode==='work'){p.sessions++;p.mode='break';p.timeLeft=5*60;showNotif('🎉 Pomodoro','Work session done! Take a 5-min break.')}
+        else{p.mode='work';p.timeLeft=25*60;showNotif('☕ Break Over','Back to work!')}
+        const c=document.getElementById('pom-content');if(c)c.innerHTML=renderPomodoroContent();
+      }
+    },1000);
+  }
+  const btn=document.getElementById('pom-toggle');if(btn)btn.textContent=p.running?'⏸ Pause':'▶ Start';
+}
+function resetPomodoro(){clearInterval(STATE.pomodoro.interval);STATE.pomodoro.running=false;STATE.pomodoro.timeLeft=25*60;STATE.pomodoro.mode='work';const c=document.getElementById('pom-content');if(c)c.innerHTML=renderPomodoroContent()}
+function skipPomPhase(){
+  const p=STATE.pomodoro;clearInterval(p.interval);p.running=false;
+  p.mode=p.mode==='work'?'break':'work';
+  p.timeLeft=p.mode==='work'?25*60:5*60;
+  const c=document.getElementById('pom-content');if(c)c.innerHTML=renderPomodoroContent();
+}
+function setPomDuration(m){STATE.pomodoro.timeLeft=m*60;const c=document.getElementById('pom-content');if(c)c.innerHTML=renderPomodoroContent()}
+
+// ==================== STUDY TRACKER ====================
+function renderTracker(body){
+  const t=STATE.tracker;
+  const totalHrs=(Object.values(t.subjects).reduce((a,b)=>a+b,0)/60).toFixed(1);
+  const today=new Date().toDateString();
+  const todaySessions=t.sessions.filter(s=>new Date(s.date).toDateString()===today);
+  const todayMins=todaySessions.reduce((a,s)=>a+s.minutes,0);
+  const streak=calcStreak();
+  body.innerHTML=`
+    <div class="app-container">
+      <div class="stat-cards">
+        <div class="stat-card"><div class="stat-num">${totalHrs}h</div><div class="stat-label">Total Study</div></div>
+        <div class="stat-card"><div class="stat-num">${(todayMins/60).toFixed(1)}h</div><div class="stat-label">Today</div></div>
+        <div class="stat-card"><div class="stat-num">${streak}🔥</div><div class="stat-label">Day Streak</div></div>
+      </div>
+      <div class="section-hdr">Log Session</div>
+      <div class="log-session-form">
+        <select id="tracker-subject">${Object.keys(t.subjects).map(s=>`<option>${s}</option>`).join('')}</select>
+        <input type="number" id="tracker-mins" placeholder="Minutes" min="1" max="480" style="width:90px">
+        <button class="action-btn primary" onclick="logSession()">Log</button>
+      </div>
+      <div class="section-hdr">Subject Progress</div>
+      <div id="tracker-subjects">
+        ${Object.entries(t.subjects).map(([sub,mins])=>{
+          const maxMins=Math.max(...Object.values(t.subjects),1);
+          const pct=Math.round((mins/maxMins)*100);
+          return`<div class="subject-row">
+            <div class="subject-name">${sub}</div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+            <div class="subject-hours">${(mins/60).toFixed(1)}h</div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="section-hdr">Recent Sessions</div>
+      <div id="tracker-recent" style="display:flex;flex-direction:column;gap:4px">
+        ${t.sessions.slice(-5).reverse().map(s=>`
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--glass);border-radius:7px;font-size:13px">
+            <span>${s.subject}</span><span style="color:var(--text2);font-size:12px">${new Date(s.date).toLocaleDateString()} — ${s.minutes}min</span>
+          </div>`).join('')||'<div style="color:var(--text3);font-size:13px">No sessions logged yet</div>'}
+      </div>
+    </div>`;
+}
+function logSession(){
+  const sub=document.getElementById('tracker-subject')?.value;
+  const mins=parseInt(document.getElementById('tracker-mins')?.value);
+  if(!sub||!mins||mins<1)return;
+  STATE.tracker.sessions.push({subject:sub,minutes:mins,date:new Date().toISOString()});
+  STATE.tracker.subjects[sub]=(STATE.tracker.subjects[sub]||0)+mins;
+  saveTracker();
+  renderTracker(document.getElementById('wb_tracker'));
+  showNotif('Study Tracker',`Logged ${mins}min of ${sub} ✓`);
+}
+function calcStreak(){
+  const days=new Set(STATE.tracker.sessions.map(s=>new Date(s.date).toDateString()));
+  let streak=0;let d=new Date();
+  while(days.has(d.toDateString())){streak++;d.setDate(d.getDate()-1)}
+  return streak;
+}
+function saveTracker(){localStorage.setItem('stos_tracker',JSON.stringify(STATE.tracker))}
+
+// ==================== AI MODULES ====================
+const AI_SYSTEM_PROMPTS = {
+  ai_math: `You are an expert Mathematics tutor for students. You solve problems step-by-step with clear explanations. 
+Cover topics: Algebra, Calculus, Trigonometry, Statistics, Geometry, Number Theory.
+Format: Show numbered steps, use clear notation. End with key formula/concept.`,
+  ai_physics: `You are an expert Physics tutor for students. You explain physics concepts with formulas and real-world examples.
+Cover: Mechanics, Thermodynamics, Electromagnetism, Optics, Modern Physics, Waves.
+Format: State the concept, give the formula, solve step-by-step, explain units.`,
+  ai_chem: `You are an expert Chemistry tutor for students. You explain chemical reactions, concepts, and problem solving.
+Cover: Organic, Inorganic, Physical Chemistry, Periodic Table, Reactions, Stoichiometry, Bonding.
+Format: Explain the concept, show reaction/formula, provide worked example.`,
+  ai_humanities: `You are an expert Humanities tutor covering History, Political Science, Geography, and Social Studies.
+Explain events, causes & effects, theories, movements, political systems, and key figures.
+Format: Clear explanations with dates, context, multiple perspectives, and memory tips.`,
+  ai_commerce: `You are an expert Commerce tutor covering Economics, Accountancy, Business Studies, and Statistics.
+Cover: Micro/Macro Economics, Financial Accounting, Business Concepts, Market Structures, Statistics basics.
+Format: Define terms clearly, show formulae, give practical examples relevant to students.`,
+};
+const AI_WELCOME = {
+  ai_math: "👋 Hi! I'm your **Math AI Tutor**.\n\nAsk me anything — algebra, calculus, trigonometry, geometry, statistics. I'll solve step-by-step!\n\nTry: *\"Solve x² + 5x + 6 = 0\"* or *\"Explain integration by parts\"*",
+  ai_physics: "⚛️ Hi! I'm your **Physics AI Tutor**.\n\nI explain concepts with formulas and real-world examples.\n\nTry: *\"What is Newton's second law?\"* or *\"Explain Ohm's Law with example\"*",
+  ai_chem: "🧪 Hi! I'm your **Chemistry AI Tutor**.\n\nAsk about reactions, elements, compounds, organic chemistry and more!\n\nTry: *\"Balance: H₂ + O₂ → H₂O\"* or *\"What are hybridization types?\"*",
+  ai_humanities: "🌍 Hi! I'm your **Humanities AI Tutor**.\n\nI cover History, Pol. Science, Economics, Geography.\n\nTry: *\"Explain causes of World War 1\"* or *\"What is federalism?\"*",
+  ai_commerce: "💹 Hi! I'm your **Commerce AI Tutor**.\n\nI cover Economics, Accountancy, Business Studies.\n\nTry: *\"What is demand elasticity?\"* or *\"Explain double entry bookkeeping\"*",
+};
+const AI_TOPICS = {
+  ai_math:['Algebra','Calculus','Trigonometry','Geometry','Statistics','Number Theory'],
+  ai_physics:['Mechanics','Thermodynamics','Electromagnetism','Optics','Waves','Modern Physics'],
+  ai_chem:['Organic','Inorganic','Physical Chem','Periodic Table','Stoichiometry','Bonding'],
+  ai_humanities:['History','Political Science','Geography','Economics','Civics','Social'],
+  ai_commerce:['Micro Economics','Macro Economics','Accountancy','Business','Statistics','Finance'],
+};
+const aiConvHistory={};
+
+function renderAI(id,body){
+  if(!aiConvHistory[id])aiConvHistory[id]=[];
+  body.style.padding='0';
+  body.innerHTML=`
+    <div class="ai-chat">
+      <div class="ai-subject-tabs">
+        ${(AI_TOPICS[id]||[]).map(t=>`<button class="ai-tab" onclick="quickAIPrompt('${id}','Explain ${t} concepts for a student')">${t}</button>`).join('')}
+      </div>
+      <div class="ai-messages" id="ai_msg_${id}">
+        <div class="ai-msg bot">${AI_WELCOME[id]||'Ask me anything!'}</div>
+        ${aiConvHistory[id].map(m=>`<div class="ai-msg ${m.role==='user'?'user':'bot'}">${escHtml(m.content)}</div>`).join('')}
+      </div>
+      <div class="ai-input-row">
+        <textarea class="ai-input" id="ai_inp_${id}" placeholder="Ask your question..." onkeydown="aiKeyDown(event,'${id}')"></textarea>
+        <button class="ai-send" id="ai_send_${id}" onclick="sendAIFromInput('${id}')">↑</button>
+      </div>
+    </div>`;
+}
+function aiKeyDown(e,id){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendAIFromInput(id)}}
+function sendAIFromInput(id){
+  const inp=document.getElementById(`ai_inp_${id}`);
+  if(!inp||!inp.value.trim())return;
+  const msg=inp.value.trim();
+  inp.value='';
+  sendAIMessage(msg,id);
+}
+function quickAIPrompt(id,prompt){sendAIMessage(prompt,id)}
+async function sendAIMessage(msg,id){
+  if(!aiConvHistory[id])aiConvHistory[id]=[];
+  aiConvHistory[id].push({role:'user',content:msg});
+  const msgDiv=document.getElementById(`ai_msg_${id}`);
+  if(msgDiv){
+    msgDiv.innerHTML+=`<div class="ai-msg user">${escHtml(msg)}</div>`;
+    const loadEl=document.createElement('div');
+    loadEl.className='ai-msg bot loading';loadEl.id='ai_loading_'+id;
+    loadEl.textContent='🤖 Thinking...';
+    msgDiv.appendChild(loadEl);
+    msgDiv.scrollTop=msgDiv.scrollHeight;
+  }
+  const sendBtn=document.getElementById(`ai_send_${id}`);
+  if(sendBtn)sendBtn.disabled=true;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system:AI_SYSTEM_PROMPTS[id]||'You are a helpful student tutor.',
+        messages:aiConvHistory[id].map(m=>({role:m.role,content:m.content}))
+      })
+    });
+    const data=await res.json();
+    const reply=data.content?.[0]?.text||'Sorry, I could not get a response.';
+    aiConvHistory[id].push({role:'assistant',content:reply});
+    const loadEl=document.getElementById('ai_loading_'+id);
+    if(loadEl){loadEl.className='ai-msg bot';loadEl.textContent=reply;loadEl.id=''}
+  }catch(err){
+    const loadEl=document.getElementById('ai_loading_'+id);
+    if(loadEl){loadEl.className='ai-msg bot';loadEl.textContent='⚠️ Connection error. Please check your internet connection.';loadEl.id=''}
+  }
+  if(sendBtn)sendBtn.disabled=false;
+  if(msgDiv)msgDiv.scrollTop=msgDiv.scrollHeight;
+}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+// ==================== CLOCK TICK ====================
+function startClockTick(){
+  setInterval(()=>{
+    const now=new Date();
+    const el=document.getElementById('clock-tb');
+    if(el)el.textContent=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    updateBigClock();
+    checkAlarms(now);
+  },1000);
+}
+function checkAlarms(now){
+  const hm=now.toTimeString().slice(0,5);
+  STATE.alarms.filter(a=>a.on&&a.time===hm&&now.getSeconds()<2).forEach(a=>{
+    showNotif('⏰ Alarm',a.label||'Time!');
+  });
+}
+
+// ==================== NOTIFICATIONS ====================
+function showNotif(title,body,duration=4000){
+  const c=document.getElementById('notif-container');
+  const n=document.createElement('div');
+  n.className='notif';
+  n.innerHTML=`<div class="notif-title">${title}</div><div class="notif-body">${body}</div>`;
+  n.onclick=()=>n.remove();
+  c.appendChild(n);
+  setTimeout(()=>{n.style.opacity='0';n.style.transform='translateX(20px)';n.style.transition='all .3s';setTimeout(()=>n.remove(),300)},duration);
+}
+
+// ==================== THEME ====================
+function toggleTheme(){
+  STATE.theme=STATE.theme==='dark'?'light':'dark';
+  document.body.classList.toggle('light-mode',STATE.theme==='light');
+  document.getElementById('theme-btn').textContent=STATE.theme==='dark'?'🌙':'☀️';
+  showNotif('Theme',STATE.theme==='light'?'Light mode on ☀️':'Dark mode on 🌙',2000);
+}
+
+// ==================== CONTEXT MENU ====================
+function showCtxMenu(x,y,items){
+  const m=document.getElementById('ctx-menu');
+  m.innerHTML=items.map(i=>i.sep?'<div class="ctx-sep"></div>':`<div class="ctx-item" onclick="ctxClick(${items.indexOf(i)})">${i.icon||''} ${i.label}</div>`).join('');
+  window._ctxItems=items;
+  m.style.cssText=`display:block;left:${Math.min(x,window.innerWidth-200)}px;top:${Math.min(y,window.innerHeight-items.length*36-20)}px`;
+  setTimeout(()=>document.addEventListener('click',closeCtxOnce,{once:true}),0);
+}
+function ctxClick(i){const item=window._ctxItems?.[i];if(item&&item.fn)item.fn();closeCtx()}
+function closeCtx(){document.getElementById('ctx-menu').style.display='none'}
+function closeCtxOnce(){closeCtx()}
+
+// ==================== LAUNCH ====================
+init();
+</script>
+</body>
+</html>
+
